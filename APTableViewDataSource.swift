@@ -14,26 +14,28 @@ import RxSwift
 protocol APCellConfigurable {
     associatedtype ItemType
     static var identifier: String { get }
-    func setupWith(model model: ItemType)
+    func setupWith(model: ItemType)
 }
+
 
 // protocol extension for default implementation of identifier
 extension APCellConfigurable where Self : UITableViewCell {
     static var identifier: String {
-        let classFullName = NSStringFromClass(self)
-        let className = classFullName.componentsSeparatedByString(".").last
+        let classFullName = NSStringFromClass(self) as String
+        let className = classFullName.components(separatedBy: ".").last
         return className ?? classFullName
     }
 }
 
 
-class APTableViewDataSource<T, C : UITableViewCell where C : APInstantiable, C : APCellConfigurable, C.ItemType == T> : NSObject, UITableViewDataSource, UITableViewDelegate {
+class APTableViewDataSource<T, C : UITableViewCell> : NSObject, UITableViewDataSource, UITableViewDelegate where C : APInstantiable, C : APCellConfigurable, C.ItemType == T {
     
     typealias Element = T
     typealias Cell = C
     
     
-    let rx_tableRowClicked = PublishSubject<NSIndexPath>()
+    let rx_tableRowClicked = PublishSubject<IndexPath>()
+    let rx_tableModelClicked = PublishSubject<Element>()
     let rx_tableReloadData = PublishSubject<Void>()
     
     
@@ -46,24 +48,23 @@ class APTableViewDataSource<T, C : UITableViewCell where C : APInstantiable, C :
     }
     */
     
-    func populate(withItems withItems: [Element]) {
+    func populate(withItems: [Element]) {
         items.removeAll()
-        items.appendContentsOf(withItems)
+        items.append(contentsOf: withItems)
         rx_tableReloadData.onNext()
     }
     
-    
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return items.count
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCellWithIdentifier(Cell.identifier) as? Cell ?? Cell()
+        let cell = tableView.dequeueReusableCell(withIdentifier: Cell.identifier) as? Cell ?? Cell()
         
         // assign model
         cell.setupWith(model: items[indexPath.row])
@@ -71,8 +72,10 @@ class APTableViewDataSource<T, C : UITableViewCell where C : APInstantiable, C :
         return cell
     }
     
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+
         rx_tableRowClicked.onNext(indexPath)
+        rx_tableModelClicked.onNext(items[indexPath.row])
     }
 }
 
