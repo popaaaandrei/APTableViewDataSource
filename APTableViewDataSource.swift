@@ -9,6 +9,7 @@
 import Foundation
 import RxSwift
 
+// comment master 1
 
 // conform your cells to this protocol
 protocol APCellConfigurable {
