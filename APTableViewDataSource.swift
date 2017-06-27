@@ -11,6 +11,7 @@ import RxSwift
 
 // comment master 1
 // add comment 1
+// add comment 2
 
 // conform your cells to this protocol
 protocol APCellConfigurable {
